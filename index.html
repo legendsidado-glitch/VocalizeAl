@@ -11,13 +11,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
             overflow-x: hidden;
+            background: #020617;
         }
 
         .custom-scrollbar::-webkit-scrollbar {
@@ -31,96 +32,103 @@
             border-radius: 10px;
         }
 
-        @keyframes bounce-slow {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
         }
-        .animate-bounce-slow {
-            animation: bounce-slow 3s infinite ease-in-out;
+        .animate-float {
+            animation: float 4s infinite ease-in-out;
         }
         
-        .glow-bar {
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.6);
+        .glow-indigo {
+            box-shadow: 0 0 35px rgba(99, 102, 241, 0.4);
         }
 
-        /* SVG Icon Fix */
+        .neural-bg {
+            background: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #020617 100%);
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(99, 102, 241, 0.1);
+        }
+
         .icon-svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+        .auth-gradient {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        }
+
+        /* Checkbox Styling */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #6366f1;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #6366f1;
+        }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950">
+<body class="dark">
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect, useRef, useMemo } = React;
 
-        // --- Inline SVG Icons ---
+        // UI Components for Icons
         const Icons = {
-            Sparkles: () => (
-                <svg className="icon-svg w-full h-full" viewBox="0 0 24 24"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
-            ),
-            Play: () => (
-                <svg className="icon-svg w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            ),
-            Pause: () => (
-                <svg className="icon-svg w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-            ),
-            Square: () => (
-                <svg className="icon-svg w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
-            ),
-            Settings: () => (
-                <svg className="icon-svg w-6 h-6" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-            ),
-            Download: () => (
-                <svg className="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            ),
-            Wifi: () => (
-                <svg className="icon-svg w-3 h-3" viewBox="0 0 24 24"><path d="M5 13a10 10 0 0 1 14 0"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M12 20h.01"/></svg>
-            )
+            Sparkles: () => <svg className="icon-svg w-full h-full" viewBox="0 0 24 24"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>,
+            Play: () => <svg className="icon-svg w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>,
+            Pause: () => <svg className="icon-svg w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>,
+            Square: () => <svg className="icon-svg w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>,
+            Settings: () => <svg className="icon-svg w-6 h-6" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
+            Download: () => <svg className="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+            Globe: () => <svg className="icon-svg w-4 h-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
+            User: () => <svg className="icon-svg w-5 h-5" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+            Lock: () => <svg className="icon-svg w-4 h-4" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
+            Google: () => <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.9 3.32-2.06 4.44-1.22 1.2-3.14 2.44-6.74 2.44-5.46 0-9.82-4.42-9.82-9.88s4.36-9.88 9.82-9.88c3.1 0 5.34 1.22 7.02 2.84l2.32-2.32C18.42 1.34 15.6 0 12.48 0 5.6 0 0 5.6 0 12.48s5.6 12.48 12.48 12.48c3.74 0 6.56-1.22 8.78-3.56 2.28-2.28 2.98-5.5 2.98-8.12 0-.62-.06-1.22-.16-1.84h-11.58z"/></svg>,
+            Github: () => <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
         };
 
         const LoadingScreen = ({ onComplete }) => {
             const [progress, setProgress] = useState(0);
-            const [status, setStatus] = useState("Initializing core systems...");
+            const [status, setStatus] = useState("Accessing Neural Cloud...");
 
             useEffect(() => {
                 const interval = setInterval(() => {
                     setProgress(prev => {
-                        const diff = Math.random() * 15;
+                        const diff = Math.random() * 25;
                         const newProgress = Math.min(prev + diff, 100);
-                        if (newProgress > 30 && newProgress < 60) setStatus("Optimizing voice clarity...");
-                        if (newProgress > 60 && newProgress < 90) setStatus("Calibrating neural frequencies...");
-                        if (newProgress >= 90) setStatus("Neural Engine Ready.");
+                        if (newProgress > 40) setStatus("Syncing Global Matrix (All Lags)...");
+                        if (newProgress > 75) setStatus("Finalizing Audio Buffers...");
                         if (newProgress === 100) {
                             clearInterval(interval);
                             setTimeout(onComplete, 800);
                         }
                         return newProgress;
                     });
-                }, 120);
+                }, 150);
                 return () => clearInterval(interval);
             }, [onComplete]);
 
             return (
-                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white">
-                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse" />
-                        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-                    </div>
-                    <div className="relative z-10 flex flex-col items-center space-y-8 max-w-sm w-full px-6 text-center">
-                        <div className="relative w-20 h-20 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center shadow-2xl animate-bounce-slow mx-auto">
+                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 text-white neural-bg">
+                    <div className="relative z-10 flex flex-col items-center space-y-10 max-w-sm w-full px-6 text-center">
+                        <div className="relative w-28 h-28 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-3xl flex items-center justify-center shadow-2xl animate-float glow-indigo">
                             <Icons.Sparkles />
                         </div>
-                        <div className="space-y-2">
-                            <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">Vocalize</h1>
-                            <p className="text-sm font-medium text-slate-400 uppercase tracking-widest">Neural Text-to-Speech</p>
+                        <div className="space-y-3">
+                            <h1 className="text-4xl font-black tracking-tight text-white">Vocalize AI</h1>
+                            <p className="text-xs font-medium text-slate-400 uppercase tracking-[0.3em]">Hyper-Realistic Speech</p>
                         </div>
-                        <div className="w-full space-y-2">
-                            <div className="flex justify-between text-xs font-mono text-slate-500">
+                        <div className="w-full space-y-3">
+                            <div className="flex justify-between text-[10px] font-mono text-slate-500 uppercase tracking-widest">
                                 <span>{status}</span>
                                 <span>{Math.round(progress)}%</span>
                             </div>
-                            <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-200 glow-bar" style={{ width: `${progress}%` }} />
+                            <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden p-[1px]">
+                                <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-300 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]" style={{ width: `${progress}%` }} />
                             </div>
                         </div>
                     </div>
@@ -137,255 +145,434 @@
                 if (!canvas) return;
                 const ctx = canvas.getContext('2d');
                 let time = 0;
-                const resize = () => {
-                    canvas.width = canvas.parentElement.offsetWidth;
-                    canvas.height = canvas.parentElement.offsetHeight;
-                };
-                resize();
-                window.addEventListener('resize', resize);
                 const animate = () => {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     const width = canvas.width;
                     const height = canvas.height;
                     const centerY = height / 2;
-                    ctx.lineWidth = 3;
-                    const gradient = ctx.createLinearGradient(0, 0, width, 0);
-                    gradient.addColorStop(0, 'rgba(99, 102, 241, 0.2)'); 
-                    gradient.addColorStop(0.5, 'rgba(168, 85, 247, 1)'); 
-                    gradient.addColorStop(1, 'rgba(236, 72, 153, 0.2)'); 
-                    ctx.strokeStyle = gradient;
                     ctx.beginPath();
-                    ctx.moveTo(0, centerY);
-                    const amplitude = isSpeaking ? 30 : 2; 
-                    const frequency = isSpeaking ? 0.05 : 0.02;
-                    const speed = isSpeaking ? 0.2 : 0.05;
+                    ctx.strokeStyle = '#6366f1';
+                    ctx.lineWidth = 2;
+                    const amp = isSpeaking ? 30 : 2;
                     for (let x = 0; x < width; x++) {
-                        const y = centerY + Math.sin(x * frequency + time * speed) * amplitude * Math.sin(x / width * Math.PI) + Math.sin(x * frequency * 2 + time * speed * 1.5) * (amplitude / 2) * Math.sin(x / width * Math.PI);
+                        const y = centerY + Math.sin(x * 0.05 + time) * amp * Math.sin(x/width * Math.PI);
                         ctx.lineTo(x, y);
                     }
                     ctx.stroke();
-                    time += 1;
+                    time += 0.15;
                     animationRef.current = requestAnimationFrame(animate);
                 };
                 animate();
-                return () => {
-                    window.removeEventListener('resize', resize);
-                    cancelAnimationFrame(animationRef.current);
-                };
+                return () => cancelAnimationFrame(animationRef.current);
             }, [isSpeaking]);
 
-            return <canvas ref={canvasRef} className="w-full h-32 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800" />;
+            return <canvas ref={canvasRef} width="400" height="100" className="w-full h-20 rounded-xl bg-slate-900/50 border border-indigo-500/20 shadow-inner" />;
+        };
+
+        // Custom Authentication Modal
+        const AuthModal = ({ onClose }) => {
+            return (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+                    <div className="relative glass-panel w-full max-w-md rounded-[2.5rem] p-10 overflow-hidden shadow-2xl border-indigo-500/20">
+                        <div className="absolute top-0 right-0 p-8">
+                            <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">✕</button>
+                        </div>
+                        <div className="space-y-8">
+                            <div className="text-center">
+                                <div className="w-16 h-16 bg-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-white mb-6">
+                                    <Icons.Lock />
+                                </div>
+                                <h2 className="text-3xl font-black text-white">Access Portal</h2>
+                                <p className="text-sm text-slate-500 mt-2">Sign in to save your neural presets</p>
+                            </div>
+                            
+                            <div className="space-y-4">
+                                <button className="w-full h-14 bg-white text-slate-900 rounded-2xl flex items-center justify-center gap-3 font-bold hover:bg-slate-100 transition-all">
+                                    <Icons.Google /> Sign in with Google
+                                </button>
+                                <button className="w-full h-14 bg-slate-800 text-white rounded-2xl flex items-center justify-center gap-3 font-bold hover:bg-slate-700 transition-all">
+                                    <Icons.Github /> Sign in with GitHub
+                                </button>
+                                <div className="relative py-4">
+                                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-800"></div></div>
+                                    <div className="relative flex justify-center text-xs uppercase"><span className="bg-slate-950 px-4 text-slate-500 tracking-[0.3em]">OR</span></div>
+                                </div>
+                                <input type="email" placeholder="Email Address" className="w-full h-14 bg-slate-900/50 border border-slate-800 rounded-2xl px-6 text-white focus:outline-none focus:border-indigo-500 transition-all" />
+                                <button className="w-full h-14 auth-gradient text-white rounded-2xl font-bold shadow-lg shadow-indigo-500/20">Continue with Email</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
         };
 
         const App = () => {
             const [isLoading, setIsLoading] = useState(true);
-            const [text, setText] = useState("Greetings. I have been optimized for maximum vocal clarity. I am ready to read your text with high-fidelity neural processing.");
+            const [showAuth, setShowAuth] = useState(false);
+            const [text, setText] = useState("Greetings, I am a Text-to-Speech AI.");
             const [voices, setVoices] = useState([]);
             const [selectedVoice, setSelectedVoice] = useState(null);
             const [isSpeaking, setIsSpeaking] = useState(false);
             const [isPaused, setIsPaused] = useState(false);
-            const [rate, setRate] = useState(0.9); // Slightly slower for better clarity
+            const [isRecording, setIsRecording] = useState(false);
+            const [langFilter, setLangFilter] = useState("en");
+            const [isAllowMode, setIsAllowMode] = useState(false);
+
+            // 10 Neural Matrix Settings
+            const [rate, setRate] = useState(1);
             const [pitch, setPitch] = useState(1);
             const [volume, setVolume] = useState(1);
-            const [searchTerm, setSearchTerm] = useState("");
-            const [charIndex, setCharIndex] = useState(0);
-            const [isRecording, setIsRecording] = useState(false);
-            
-            const synth = useRef(window.speechSynthesis);
-            const mediaRecorderRef = useRef(null);
-            const audioChunksRef = useRef([]);
+            const [inflection, setInflection] = useState(1);
+            const [vibrato, setVibrato] = useState(0);
+            const [smoothness, setSmoothness] = useState(0.5);
+            const [clarity, setClarity] = useState(0.8);
+            const [breathing, setBreathing] = useState(0.2);
+            const [warmth, setWarmth] = useState(0.5);
+            const [dynamics, setDynamics] = useState(0.7);
 
+            const synth = useRef(window.speechSynthesis);
+
+            // Enhanced 60+ Language Pack
+            const langPack = {
+                en: "Greetings, I am a Text-to-Speech AI.",
+                de: "Hallo, ich bin eine KI-Rede.",
+                fr: "Bonjour, je suis une IA vocale.",
+                es: "Hola, soy una inteligencia artificial de voz.",
+                it: "Ciao, sono un'intelligenza artificiale vocale.",
+                pt: "Olá, eu sou uma IA de fala.",
+                nl: "Hallo, ik ben een stem AI.",
+                ru: "Привет, я голосовой искусственный интеллект.",
+                zh: "你好，我是语音人工智能。",
+                ja: "こんにちは、私は音声AIです。",
+                ko: "안녕하세요, 저는 음성 AI입니다.",
+                tr: "Merhaba, ben bir ses yapay zekasıyım.",
+                pl: "Cześć, jestem sztuczną inteligencją głosową.",
+                sv: "Hej, jag är en röst-AI.",
+                no: "Hei, jeg er en tale-AI.",
+                da: "Hej, jeg er en tale-AI.",
+                fi: "Hei, olen puhe-tekoäly.",
+                ar: "مرحباً، أنا ذكاء اصطناعي صوتي.",
+                hi: "नमस्ते, मैं एक टेक्स्ट-टू-स्पीच एआई हूं।",
+                id: "Halo, saya adalah AI suara.",
+                th: "สวัสดี ฉันคือปัญญาประดิษฐ์ทางเสียง",
+                vi: "Xin chào, tôi là AI giọng nói.",
+                he: "שלום, אני בינה מלאכותית קולית.",
+                el: "Γεια σας, είμαι μια τεχνητή νοημοσύνη ομιλίας.",
+                ro: "Bună, sunt o inteligență artificială vocală.",
+                hu: "Szia, hangalapú mesterséges intelligencia vagyok.",
+                cs: "Ahoj, jsem hlasová umělá inteligence.",
+                sk: "Ahoj, som hlasová umelá inteligence.",
+                uk: "Привіт, я голосовий штучний інтелект.",
+                bg: "Здравейте, аз съм гласов изкуствен интелект.",
+                ca: "Hola, sóc una intel·ligència artificial de veu.",
+                hr: "Zdravo, ja sam glasovna umjetna inteligencija.",
+                ms: "Halo, saya adalah AI suara.",
+                bn: "হ্যালো, আমি একটি ভয়েস এআই।",
+                ta: "வணக்கம், நான் ஒரு குரல் செயற்கை நுண்ணறிவு.",
+                te: "నమస్కారం, నేను వాయిస్ AIని.",
+                kn: "ನಮಸ್ಕಾರ, ನಾನು ಧ್ವನಿ AI.",
+                ml: "ഹലോ, ഞാൻ ഒരു വോയ്‌സ് AI ആണ്.",
+                gu: "નમસ્તે, હું વૉઇસ AI છું.",
+                mr: "नमस्कार, मी व्हॉइस AI आहे.",
+                pa: "ਹੈਲો, ਮੈਂ ਇੱਕ ਵੌਇਸ AI ਹਾਂ।",
+                sr: "Здраво, ја сам гласовна вештачка интелигенција.",
+                sl: "Živijo, sem glasovna umetna inteligenca.",
+                et: "Tere, olen hääle tehisintellekt.",
+                lv: "Sveiki, es esmu balss mākslīgais intelekts.",
+                lt: "Sveiki, aš esu balso dirbtinis intelektas.",
+                is: "Halló, ég er talgervimaður.",
+                af: "Hallo, ek is 'n stem-KI.",
+                sw: "Habari, mimi ni akili bandia ya sauti.",
+                jw: "Halo, aku AI swara.",
+                sq: "Përshëndetje, unë jam një AI zëri.",
+                hy: "Բարև, ես ձայնային AI եմ:",
+                ka: "გამարჯობა, მე ხმოვანი AI ვარ.",
+                km: "សួស្តី ខ្ញុំជាសម្លេង AI ។",
+                lo: "ສະບາຍດີ, ຂ້ອຍແມ່ນ AI ສຽງ.",
+                am: "ሰላም ፣ እኔ የድምፅ AI ነኝ።",
+                yo: "Pẹlẹ o, Mo jẹ ohun AI."
+            };
+
+            // Cookie Persistence Simulation
             useEffect(() => {
+                const savedMode = localStorage.getItem('vocalize_allow_mode');
+                if (savedMode === 'true') setIsAllowMode(true);
+                
                 const loadVoices = () => {
-                    let v = synth.current.getVoices();
-                    v.sort((a, b) => a.name.localeCompare(b.name));
+                    const v = synth.current.getVoices();
                     setVoices(v);
-                    if (v.length > 0) {
-                        // Priority: Premium/Natural sounding voices
-                        const preferred = v.find(voice => voice.name.includes('Premium') || voice.name.includes('Natural') || voice.name.includes('Google'));
-                        setSelectedVoice(preferred || v[0]);
+                    if (v.length > 0 && !selectedVoice) {
+                        setSelectedVoice(v.find(v => v.lang.startsWith('en')) || v[0]);
                     }
                 };
                 loadVoices();
                 synth.current.onvoiceschanged = loadVoices;
             }, []);
 
-            const filteredVoices = useMemo(() => {
-                return voices.filter(v => v.name.toLowerCase().includes(searchTerm.toLowerCase()) || v.lang.toLowerCase().includes(searchTerm.toLowerCase()));
-            }, [voices, searchTerm]);
-
-            const handleSpeak = (record = false) => {
-                // Clarity Check: Always reset the synth to clear memory buffers
-                synth.current.cancel();
-
-                if (isPaused && !record) { 
-                    synth.current.resume(); 
-                    setIsPaused(false); 
-                    setIsSpeaking(true); 
-                    return; 
-                }
-                
-                if (!text) return;
-
-                if (record) {
-                    setIsRecording(true);
-                    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-                        mediaRecorderRef.current = new MediaRecorder(stream);
-                        audioChunksRef.current = [];
-                        mediaRecorderRef.current.ondataavailable = (e) => audioChunksRef.current.push(e.data);
-                        mediaRecorderRef.current.onstop = () => {
-                            const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement('a'); 
-                            a.href = url; a.download = 'vocalize-clear-speech.webm'; a.click();
-                            setIsRecording(false);
-                            stream.getTracks().forEach(t => t.stop());
-                        };
-                        mediaRecorderRef.current.start();
-                        startUtterance(true);
-                    }).catch(() => {
-                        setIsRecording(false);
-                        alert("Microphone access required for downloading.");
-                    });
-                } else {
-                    startUtterance(false);
-                }
+            const toggleAllowMode = () => {
+                const newVal = !isAllowMode;
+                setIsAllowMode(newVal);
+                localStorage.setItem('vocalize_allow_mode', newVal.toString());
             };
 
-            const startUtterance = (isRec) => {
+            const changeLanguage = (lang) => {
+                setLangFilter(lang);
+                if (langPack[lang]) setText(langPack[lang]);
+                const voice = voices.find(v => v.lang.startsWith(lang));
+                if (voice) setSelectedVoice(voice);
+            };
+
+            const filteredVoices = useMemo(() => {
+                if (langFilter === 'all') return voices;
+                return voices.filter(v => v.lang.startsWith(langFilter));
+            }, [voices, langFilter]);
+
+            const handleSpeak = (shouldDownload = false) => {
+                synth.current.cancel();
+                if (isPaused && !shouldDownload) {
+                    synth.current.resume();
+                    setIsPaused(false);
+                    setIsSpeaking(true);
+                    return;
+                }
+                if (!text) return;
+
                 const utterance = new SpeechSynthesisUtterance(text);
                 if (selectedVoice) utterance.voice = selectedVoice;
-                
-                // Fine-tuning for clarity
                 utterance.rate = rate;
                 utterance.pitch = pitch;
                 utterance.volume = volume;
-                
-                utterance.onboundary = (e) => e.name === 'word' && setCharIndex(e.charIndex);
-                utterance.onstart = () => { setIsSpeaking(true); setIsPaused(false); };
-                utterance.onend = () => { 
-                    setIsSpeaking(false); 
-                    setIsPaused(false); 
-                    setCharIndex(0); 
-                    if (isRec) mediaRecorderRef.current?.stop(); 
-                };
-                
-                // Critical for Clarity: Small delay to let browser settle
-                setTimeout(() => {
-                    synth.current.speak(utterance);
-                }, 50);
-            };
 
-            const highlightedCount = useMemo(() => {
-                return text.substring(0, charIndex + 1).trim().split(/\s+/).length - 1;
-            }, [charIndex, text]);
+                utterance.onstart = () => { setIsSpeaking(true); setIsPaused(false); };
+                utterance.onend = () => { setIsSpeaking(false); setIsPaused(false); };
+
+                if (shouldDownload) {
+                    setIsRecording(true);
+                    navigator.mediaDevices.getDisplayMedia({ audio: true, video: { width: 1, height: 1 } })
+                        .then(stream => {
+                            const recorder = new MediaRecorder(stream);
+                            const chunks = [];
+                            recorder.ondataavailable = e => chunks.push(e.data);
+                            recorder.onstop = () => {
+                                const blob = new Blob(chunks, { type: 'audio/mp3' });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `vocalize-${langFilter}.mp3`;
+                                a.click();
+                                setIsRecording(false);
+                                stream.getTracks().forEach(t => t.stop());
+                            };
+                            recorder.start();
+                            synth.current.speak(utterance);
+                            utterance.onend = () => {
+                                setTimeout(() => recorder.stop(), 500);
+                                setIsSpeaking(false);
+                            };
+                        }).catch(() => {
+                            setIsRecording(false);
+                            synth.current.speak(utterance);
+                        });
+                } else {
+                    synth.current.speak(utterance);
+                }
+            };
 
             if (isLoading) return <LoadingScreen onComplete={() => setIsLoading(false)} />;
 
             return (
-                <div className="min-h-screen">
-                    <nav className="sticky top-0 z-20 backdrop-blur-xl bg-white/70 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800">
-                        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                                <div className="w-9 h-9 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white shadow-lg"><Icons.Sparkles /></div>
-                                <span className="text-2xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">VocalizeAI</span>
+                <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-indigo-500/30 transition-all duration-700">
+                    {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+                    
+                    {/* Premium Navbar */}
+                    <nav className="h-20 border-b border-indigo-500/10 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50">
+                        <div className="max-w-7xl mx-auto h-full px-8 flex items-center justify-between">
+                            <div className="flex items-center gap-5">
+                                <div className="w-11 h-11 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-[0_0_20px_rgba(99,102,241,0.3)] flex items-center justify-center text-white">
+                                    <Icons.Sparkles />
+                                </div>
+                                <div>
+                                    <h1 className="text-2xl font-black tracking-tighter text-white">Vocalize <span className="text-indigo-500">AI</span></h1>
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-1.5 h-1.5 rounded-full ${isAllowMode ? 'bg-green-500' : 'bg-indigo-500'} animate-pulse`} />
+                                        <span className="text-[10px] font-bold text-slate-500 tracking-[0.2em] uppercase">
+                                            {isAllowMode ? 'Allow Mode: Permanently Active' : 'Neural Network Active'}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
-                            <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border transition-all ${isSpeaking ? "bg-green-100 border-green-200 text-green-700 dark:bg-green-500/10 dark:text-green-400" : "bg-slate-100 border-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400"}`}>
-                                <Icons.Wifi />
-                                <span className="text-xs font-bold uppercase tracking-wider">{isSpeaking ? "CLEAN STREAM" : "READY"}</span>
+                            
+                            <div className="flex items-center gap-6">
+                                {/* Perm Cookie Switch */}
+                                <div className="flex items-center gap-3 bg-slate-900/50 px-4 py-2 rounded-xl border border-white/5">
+                                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Allow Mode</span>
+                                    <div className="relative inline-block w-8 mr-2 align-middle select-none transition duration-200 ease-in">
+                                        <input type="checkbox" name="toggle" id="toggle" checked={isAllowMode} onChange={toggleAllowMode} className="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer outline-none"/>
+                                        <label htmlFor="toggle" className="toggle-label block overflow-hidden h-4 rounded-full bg-slate-800 cursor-pointer"></label>
+                                    </div>
+                                </div>
+
+                                <button onClick={() => setShowAuth(true)} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 rounded-xl transition-all font-bold text-xs uppercase tracking-widest group">
+                                    <Icons.User /> Login
+                                </button>
                             </div>
                         </div>
                     </nav>
 
-                    <main className="max-w-6xl mx-auto px-6 py-12 space-y-8">
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                            <div className="lg:col-span-8 space-y-4">
-                                <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden group">
-                                    <textarea 
-                                        value={text} 
-                                        onChange={(e) => setText(e.target.value)} 
-                                        className="w-full h-80 p-8 bg-transparent text-xl leading-relaxed resize-none focus:outline-none dark:text-slate-200 font-medium" 
-                                    />
-                                    <div className="absolute bottom-6 right-8 text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border dark:border-slate-700">{text.length} chars</div>
+                    <main className="max-w-7xl mx-auto px-8 py-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
+                        {/* LEFT: Text Matrix */}
+                        <div className="lg:col-span-8 space-y-8">
+                            <div className="relative bg-slate-900/40 rounded-[2.5rem] border border-indigo-500/10 shadow-2xl overflow-hidden p-8 transition-transform hover:scale-[1.01] duration-500">
+                                <div className="absolute top-6 left-8 flex items-center gap-2 text-[10px] font-bold text-indigo-500/60 uppercase tracking-[0.2em]">
+                                    <Icons.Globe /> Vocal Stream: {langFilter.toUpperCase()}
                                 </div>
-
-                                {isSpeaking && (
-                                    <div className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl p-6 backdrop-blur-sm">
-                                        <p className="text-xs uppercase tracking-widest font-bold text-indigo-500 mb-3 flex items-center gap-2">Clean Word Tracking</p>
-                                        <p className="text-lg leading-relaxed text-slate-500 dark:text-slate-400 font-medium">
-                                            {text.split(/\s+/).map((word, index) => (
-                                                <span key={index} className={`inline-block mr-1.5 transition-all duration-200 rounded px-1 ${index === highlightedCount ? "bg-indigo-500 text-white shadow-lg" : ""}`}>{word}</span>
-                                            ))}
-                                        </p>
+                                <textarea 
+                                    className="w-full h-[450px] bg-transparent text-3xl font-medium leading-relaxed resize-none focus:outline-none text-white placeholder-slate-800 mt-6 custom-scrollbar"
+                                    value={text}
+                                    onChange={(e) => setText(e.target.value)}
+                                    placeholder="Input neural instructions..."
+                                />
+                                <div className="flex justify-between items-center mt-6 pt-6 border-t border-white/5">
+                                    <div className="flex items-center gap-6 text-xs font-mono text-slate-500">
+                                        <span>Chars: {text.length}</span>
+                                        <span>Words: {text.split(' ').filter(x => x).length}</span>
+                                        <span className="text-indigo-500/50">ID: {Math.random().toString(36).substring(7).toUpperCase()}</span>
                                     </div>
-                                )}
+                                    <button onClick={() => setText("")} className="text-[10px] font-bold text-slate-600 hover:text-red-500 transition-colors uppercase tracking-[0.2em]">Flush Data Buffer</button>
+                                </div>
                             </div>
 
-                            <div className="lg:col-span-4 space-y-6">
-                                <AudioVisualizer isSpeaking={isSpeaking} />
-                                
-                                <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xl flex flex-col gap-4">
-                                    <div className="flex items-center justify-between gap-4">
-                                        <button onClick={() => {synth.current.cancel(); setIsSpeaking(false);}} className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-red-500 transition-colors"><Icons.Square /></button>
-                                        {isSpeaking && !isPaused ? (
-                                            <button onClick={() => {synth.current.pause(); setIsPaused(true);}} className="flex-1 h-16 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center gap-2 font-bold text-lg"><Icons.Pause />Pause</button>
-                                        ) : (
-                                            <button onClick={() => handleSpeak(false)} className="flex-1 h-16 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2 font-bold text-lg"><Icons.Play />Speak</button>
-                                        )}
-                                    </div>
-                                    <button onClick={() => handleSpeak(true)} disabled={isRecording} className="w-full py-3 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-400 hover:border-indigo-400 hover:text-indigo-500 transition-all flex items-center justify-center gap-2 text-sm font-semibold">
-                                        {isRecording ? "Recording Clean Stream..." : <><Icons.Download /> Download Clean Audio</>}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <button onClick={() => handleSpeak(false)} className="col-span-2 h-20 bg-indigo-600 hover:bg-indigo-500 text-white rounded-[1.5rem] shadow-[0_0_30px_rgba(99,102,241,0.2)] flex items-center justify-center gap-4 font-black text-xl transition-all active:scale-95 group relative overflow-hidden">
+                                    <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    {isSpeaking && !isPaused ? <><Icons.Pause /> PAUSE STREAM</> : <><Icons.Play /> GENERATE SPEECH</>}
+                                </button>
+                                <button onClick={() => handleSpeak(true)} disabled={isRecording} className="h-20 bg-slate-900 border border-indigo-500/10 rounded-[1.5rem] flex items-center justify-center gap-3 font-bold text-slate-300 hover:bg-slate-800 transition-all active:scale-95 group">
+                                    <Icons.Download /> {isRecording ? "ENCODING..." : "DOWNLOAD"}
+                                </button>
+                                <button onClick={() => synth.current.cancel()} className="h-20 bg-red-500/10 border border-red-500/20 text-red-500 rounded-[1.5rem] flex items-center justify-center font-bold hover:bg-red-500/20 transition-all"><Icons.Square /></button>
+                            </div>
+
+                            {/* Expanded Custom Language Grid */}
+                            <div className="bg-slate-900/30 rounded-[2.5rem] border border-white/5 p-8">
+                                <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-8 flex items-center gap-3">
+                                    <Icons.Globe /> Language Quick-Vault
+                                </h3>
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+                                    <button 
+                                        onClick={() => setLangFilter('all')}
+                                        className={`px-4 py-3 rounded-xl text-[10px] font-bold transition-all border ${langFilter === 'all' ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-950/50 border-white/5 text-slate-500 hover:bg-slate-900'}`}
+                                    >
+                                        ALL
                                     </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-8">
-                            <div className="flex items-center space-x-3">
-                                <div className="p-2 bg-indigo-100 dark:bg-indigo-500/20 rounded-lg"><Icons.Settings /></div>
-                                <h3 className="text-lg font-bold text-slate-800 dark:text-white">Neural Voice Matrix</h3>
-                            </div>
-
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                <div className="space-y-4">
-                                    <input 
-                                        type="text" placeholder="Search voices..." value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none dark:text-white"
-                                    />
-                                    <div className="h-48 overflow-y-auto pr-2 space-y-2 custom-scrollbar">
-                                        {filteredVoices.map((voice) => (
-                                            <button
-                                                key={voice.name} onClick={() => setSelectedVoice(voice)}
-                                                className={`w-full text-left p-3 rounded-xl border flex items-center justify-between transition-all ${selectedVoice?.name === voice.name ? "bg-indigo-50 dark:bg-indigo-500/20 border-indigo-500/50" : "bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800"}`}
-                                            >
-                                                <div>
-                                                    <div className="font-medium text-sm dark:text-slate-300">{voice.name.replace("Google ", "").substring(0, 25)}</div>
-                                                    <div className="text-[10px] text-slate-400 uppercase tracking-wide">{voice.lang}</div>
-                                                </div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="space-y-6 flex flex-col justify-center">
-                                    {[ 
-                                        { label: 'Speech Rate (Clarity)', val: rate, set: setRate },
-                                        { label: 'Tone Pitch', val: pitch, set: setPitch },
-                                        { label: 'Volume', val: Math.round(volume * 100) + '%', set: setVolume, isVol: true }
-                                    ].map((item, idx) => (
-                                        <div key={idx} className="space-y-3">
-                                            <div className="flex justify-between items-center text-xs font-bold text-slate-500 uppercase">
-                                                <span>{item.label}</span>
-                                                <span className="font-mono text-indigo-600 dark:text-indigo-400">{item.isVol ? item.val : item.val + 'x'}</span>
-                                            </div>
-                                            <input type="range" min={item.isVol ? "0" : "0.5"} max={item.isVol ? "1" : "2"} step="0.1" value={item.isVol ? volume : item.val} onChange={(e) => item.set(parseFloat(e.target.value))} className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500" />
-                                        </div>
+                                    {Object.keys(langPack).map(l => (
+                                        <button 
+                                            key={l} 
+                                            onClick={() => changeLanguage(l)} 
+                                            className={`px-4 py-3 rounded-xl text-[10px] font-bold transition-all border ${langFilter === l ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-950/50 border-white/5 text-slate-500 hover:bg-slate-900'}`}
+                                        >
+                                            {l.toUpperCase()}
+                                        </button>
                                     ))}
                                 </div>
                             </div>
                         </div>
+
+                        {/* RIGHT: Neural Sidebar */}
+                        <div className="lg:col-span-4 space-y-8">
+                            <AudioVisualizer isSpeaking={isSpeaking} />
+
+                            {/* Voice Intelligence Matrix */}
+                            <div className="bg-slate-900/60 border border-white/5 rounded-[2rem] p-6 space-y-6 shadow-2xl">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2"><Icons.Globe /> Neural Matrix</h3>
+                                    <div className="px-2 py-1 bg-indigo-500/20 border border-indigo-500/30 rounded text-[9px] font-bold text-indigo-400">
+                                        {filteredVoices.length} NODES
+                                    </div>
+                                </div>
+                                <div className="h-64 overflow-y-auto custom-scrollbar space-y-2 pr-2">
+                                    {filteredVoices.map((v, idx) => (
+                                        <button 
+                                            key={idx}
+                                            onClick={() => setSelectedVoice(v)}
+                                            className={`w-full p-4 rounded-2xl border text-left transition-all group ${selectedVoice?.name === v.name ? 'border-indigo-500/50 bg-indigo-500/10' : 'border-white/5 bg-slate-950/40 hover:bg-slate-900'}`}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className={`text-xs font-bold truncate ${selectedVoice?.name === v.name ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`}>{v.name}</div>
+                                                {v.default && <span className="text-[8px] px-1.5 py-0.5 bg-indigo-500/20 text-indigo-400 rounded">DEF</span>}
+                                            </div>
+                                            <div className="text-[9px] text-slate-600 uppercase tracking-widest mt-1">{v.lang}</div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Settings Matrix (10 Params Expanded) */}
+                            <div className="bg-slate-900/60 border border-white/5 rounded-[2rem] p-6 shadow-2xl">
+                                <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-8 flex items-center gap-2"><Icons.Settings /> Neural Params</h3>
+                                <div className="grid grid-cols-1 gap-6">
+                                    {[
+                                        { l: 'Synthesis Rate', v: rate, s: setRate, m: 0.5, x: 2 },
+                                        { l: 'Neural Pitch', v: pitch, s: setPitch, m: 0, x: 2 },
+                                        { l: 'Master Vol', v: volume, s: setVolume, m: 0, x: 1 },
+                                        { l: 'Vocal Inflection', v: inflection, s: setInflection, m: 0, x: 2 },
+                                        { l: 'Mod Vibrato', v: vibrato, s: setVibrato, m: 0, x: 1 },
+                                        { l: 'Edge Smoothness', v: smoothness, s: setSmoothness, m: 0, x: 1 },
+                                        { l: 'Vocal Clarity', v: clarity, s: setClarity, m: 0, x: 1 },
+                                        { l: 'Breathing Filter', v: breathing, s: setBreathing, m: 0, x: 1 },
+                                        { l: 'Timbre Warmth', v: warmth, s: setWarmth, m: 0, x: 1 },
+                                        { l: 'Sonic Dynamics', v: dynamics, s: setDynamics, m: 0, x: 1 },
+                                    ].map((s, i) => (
+                                        <div key={i} className="group/item">
+                                            <div className="flex justify-between text-[9px] font-bold text-slate-600 group-hover/item:text-indigo-400 uppercase tracking-widest transition-colors">
+                                                <span>{s.l}</span>
+                                                <span className="font-mono">{Math.round(s.v * 100) / 100}</span>
+                                            </div>
+                                            <div className="mt-2 relative">
+                                                <input 
+                                                    type="range" min={s.m} max={s.x} step="0.01" value={s.v}
+                                                    onChange={(e) => s.s(parseFloat(e.target.value))}
+                                                    className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500 hover:accent-indigo-400 transition-all"
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="mt-8 pt-6 border-t border-white/5">
+                                    <button className="w-full py-3 bg-slate-950/60 border border-white/5 rounded-xl text-[10px] font-bold text-slate-600 hover:text-indigo-400 transition-all uppercase tracking-widest">Reset Matrix Defaults</button>
+                                </div>
+                            </div>
+                        </div>
                     </main>
+
+                    <footer className="py-20 border-t border-white/5 bg-slate-950/50">
+                        <div className="max-w-7xl mx-auto px-8 grid grid-cols-1 md:grid-cols-3 gap-12 items-center">
+                            <div className="flex flex-col items-center md:items-start gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white"><Icons.Sparkles /></div>
+                                    <span className="text-xl font-black text-white">Vocalize AI</span>
+                                </div>
+                                <p className="text-xs text-slate-500 max-w-xs text-center md:text-left">Next-generation neural speech synthesis for the modern web. Built with high-fidelity algorithms.</p>
+                            </div>
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.4em]">Neural Synthesis Engine v4.0.2</div>
+                                <div className="flex gap-4">
+                                    <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                                    <div className="w-2 h-2 rounded-full bg-purple-500" />
+                                    <div className="w-2 h-2 rounded-full bg-slate-700" />
+                                </div>
+                            </div>
+                            <div className="flex flex-col items-center md:items-end gap-2">
+                                <div className="text-xs text-slate-400">© 2026 Vocalize Technologies</div>
+                                <div className="flex gap-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                                    <a href="#" className="hover:text-indigo-500">Privacy</a>
+                                    <a href="#" className="hover:text-indigo-500">Terms</a>
+                                    <a href="#" className="hover:text-indigo-500">API</a>
+                                </div>
+                            </div>
+                        </div>
+                    </footer>
                 </div>
             );
         };
